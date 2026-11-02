@@ -1,184 +1,245 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+/* Main page: a centered column with room between each section. */
+#root {
+  width: min(100% - 48px, 960px);
+  margin: 0 auto;
+  padding: 56px 0;
 }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
+#root > div {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+  gap: 28px;
 }
 
-#next-steps {
+.TitleDate {
   display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  /* Override the temporary inline background in App.tsx. */
+  background: transparent !important;
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+.TitleDate h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
 }
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+.TitleDate p {
+  color: #6b7786;
+  white-space: nowrap;
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+/* The existing JSX has alternating labels and values, without card wrappers. */
+.Totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 16px;
+  background: transparent !important;
 }
 
-.ticks {
-  position: relative;
+.Totals h2,
+.Totals > div {
+  padding: 16px 20px;
+  border: 1px solid #e1e6ed;
+  background: #fff;
+}
+
+.Totals h2 {
+  grid-row: 1;
+  padding-bottom: 4px;
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  color: #6b7786;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.Totals > div {
+  grid-row: 2;
+  padding-top: 0;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.Totals > :nth-child(1),
+.Totals > :nth-child(2) {
+  grid-column: 1;
+}
+
+.Totals > :nth-child(3),
+.Totals > :nth-child(4) {
+  grid-column: 2;
+}
+
+.Totals > :nth-child(5),
+.Totals > :nth-child(6) {
+  grid-column: 3;
+}
+
+.Totals > :nth-child(2) {
+  color: #21805b;
+}
+
+.Totals > :nth-child(4) {
+  color: #bd4a4a;
+}
+
+/* Add transaction fields and button. */
+form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.2fr 1.3fr 1fr auto;
+  align-items: end;
+  gap: 12px;
+}
+
+form > h2 {
+  grid-column: 1 / -1;
+  font-size: 1.125rem;
+}
+
+form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+form input,
+form select,
+form button {
   width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d9e0e8;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
+form button {
+  padding-inline: 22px;
+  border-color: #2866b4;
+  background: #2866b4;
+  color: #fff;
+  font-weight: 600;
+}
+
+form button:hover {
+  background: #205594;
+}
+
+/* Match the class spelling currently used in App.tsx. */
+.TranscationList {
+  display: grid;
+  gap: 12px;
+}
+
+.Transcations {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 2fr) minmax(0, 1fr) 104px minmax(80px, 1fr) 64px;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e1e6ed;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.Transcations h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.Transcations p {
+  color: #6b7786;
+  font-size: 0.875rem;
+}
+
+.Transcations .id {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.Transcations .category {
+  overflow-wrap: anywhere;
+}
+
+.Transcations .amount {
+  color: #202b38;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  #root {
+    width: calc(100% - 32px);
+    padding: 32px 0;
   }
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
+  form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+
+  form button {
+    grid-column: 1 / -1;
+  }
+
+  .Transcations {
+    grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 12px;
+    padding: 16px;
+  }
+
+  .Transcations .id {
+    grid-column: 1;
+    grid-row: 1 / 5;
+    align-self: start;
+  }
+
+  .Transcations h2 {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .Transcations .amount {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .Transcations .category,
+  .Transcations .date,
+  .Transcations .type {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 420px) {
+  .TitleDate {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .Totals {
+    column-gap: 8px;
+  }
+
+  .Totals h2,
+  .Totals > div {
+    padding-inline: 10px;
+  }
+
+  form {
+    grid-template-columns: 1fr;
   }
 }
