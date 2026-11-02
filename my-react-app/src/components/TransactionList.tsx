@@ -1,46 +1,27 @@
 import TransactionItem from "./TransactionsItem.js";
+import type { Transaction } from "../types/transaction.js";
 
-
-type Transcations = {
-  id: number;
-  description: string; 
-  category: string;
-  date: Date;
-  amount: number;
-  type: string
-}
-type TranscationProps = {
+// defining the props for the TransactionList component.
+type TransactionListProps = {
   title: string;
-  transactionList: Transcations[]
-}
+  transactionList: Transaction[];
+};
 
-function TransactionList(props: TranscationProps) {
-    let list = props.transactionList
-    if (list.length === 0){
-        return (
-            <div className="TranscationList">
-              <h2>{props.title}</h2>
-              <p>No transactions yet</p>
-            </div>
-        )
-    }
+// Rendering the TransactionList component.
+function TransactionList({ title, transactionList }: TransactionListProps) {
+  
+    // If no transactions, display "No transactions yet".
+    // If transactions exist, display them in a list.
     return (
     <div className="TranscationList">
-      <h2>{props.title}</h2>
-
-      {props.transactionList.map((item) => (
-        <TransactionItem 
-        key = {item.id} 
-        id = {item.id} 
-        Description = {item.description} 
-        Category = {item.category} 
-        Date={item.date} 
-        Amount = {item.amount} 
-        Type = {item.type} />
-      ))}
-
+      <h2>{title}</h2>
+      {transactionList.length === 0 ? (
+        <p>No transactions yet</p>
+      ) : (
+        transactionList.map((item) => <TransactionItem key={item.id} {...item} />)
+      )}
     </div>
   );
 }
-
+// Export the component
 export default TransactionList;

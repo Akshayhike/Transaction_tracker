@@ -5,6 +5,7 @@ type titleProps = {
   date: Date;
 }
 
+// Displays the title and date.
 function Title_Date(props: titleProps) {
   return (
     <div className="TitleDate" style={{background: 'lightgreen'}}>

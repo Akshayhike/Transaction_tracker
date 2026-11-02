@@ -4,6 +4,7 @@ type TotalsProps = {
   balance: number;
 }
 
+// Displays the totals of transactions.
 function Totals(props:TotalsProps) {
   return (
     <div className="Totals" style={{background: 'lightblue'}}>
