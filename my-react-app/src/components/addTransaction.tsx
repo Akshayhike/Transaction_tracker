@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { format, isValid, parseISO } from 'date-fns';
-import type { NewTransaction, TransactionType } from '../types/transaction.js';
+import type { NewTransaction, Transaction, TransactionType } from '../types/transaction.js';
 
 type AddTransactionProps = {
   onAdd: (transaction: NewTransaction) => void;
+  editingTransaction: Transaction | null;
+  onSave: (id: number, transaction: NewTransaction) => void;
+  onCancel: () => void;
 };
 
-function AddTransaction({ onAdd }: AddTransactionProps) {
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [date, setDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
-  const [type, setType] = useState<TransactionType>("Expense");
+function AddTransaction({ onAdd, editingTransaction, onSave, onCancel }: AddTransactionProps) {
+  const [description, setDescription] = useState(editingTransaction?.description ?? "");
+  const [amount, setAmount] = useState(editingTransaction ? String(editingTransaction.amount) : "");
+  const [category, setCategory] = useState(editingTransaction?.category ?? "");
+  const [date, setDate] = useState(() => format(editingTransaction?.date ?? new Date(), 'yyyy-MM-dd'));
+  const [type, setType] = useState<TransactionType>(editingTransaction?.type ?? "Expense");
   const [error, setError] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -34,13 +37,18 @@ function AddTransaction({ onAdd }: AddTransactionProps) {
       return;
     }
 
-    onAdd({
+    const transaction: NewTransaction = {
       description: description.trim(),
       amount: Math.round(numericAmount * 100) / 100,
       category: category.trim(),
       date: transactionDate,
       type,
-    });
+    };
+    if (editingTransaction) {
+      onSave(editingTransaction.id, transaction);
+      return;
+    }
+    onAdd(transaction);
     setDescription("");
     setAmount("");
     setCategory("");
@@ -49,10 +57,10 @@ function AddTransaction({ onAdd }: AddTransactionProps) {
 
   return (
     <form className="AddTransaction" onSubmit={handleSubmit}>
-      <h2>Add transaction</h2>
+      <h2>{editingTransaction ? "Edit transaction" : "Add transaction"}</h2>
       <label>
         Description
-        <input name="description" placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} required />
+        <input autoFocus={Boolean(editingTransaction)} name="description" placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} required />
       </label>
       <label>
         Amount
@@ -73,7 +81,10 @@ function AddTransaction({ onAdd }: AddTransactionProps) {
           <option value="Income">Income</option>
         </select>
       </label>
-      <button type="submit">Add</button>
+      <div className="form-actions">
+        <button type="submit">{editingTransaction ? "Save changes" : "Add"}</button>
+        {editingTransaction ? <button className="secondary-button" type="button" onClick={onCancel}>Cancel</button> : null}
+      </div>
       {error ? <p role="alert" style={{ gridColumn: '1 / -1' }}>{error}</p> : null}
     </form>
   );
