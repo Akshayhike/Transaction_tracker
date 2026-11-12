@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import type { Transaction } from '../types/transaction.js';
 
 type TransactionItemProps = Transaction & {
+  busy: boolean;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 };
@@ -11,10 +12,12 @@ type TransactionItemProps = Transaction & {
 function TransactionItem(props: TransactionItemProps) {
   const actionsRef = useRef<HTMLDetailsElement>(null);
 
+  // Closes the actions menu.
   function closeActions() {
     if (actionsRef.current) actionsRef.current.open = false;
   }
 
+  // Renders the transaction item.
   return (
     <div className="Transcations">
       <p className="id">{props.id}</p>
@@ -42,8 +45,8 @@ function TransactionItem(props: TransactionItemProps) {
           </svg>
         </summary>
         <div className="action-options">
-          <button type="button" onClick={() => { closeActions(); props.onEdit(props.id); }}>Edit</button>
-          <button type="button" className="delete-action" onClick={() => { closeActions(); props.onDelete(props.id); }}>Delete</button>
+          <button disabled={props.busy} type="button" onClick={() => { closeActions(); props.onEdit(props.id); }}>Edit</button>
+          <button disabled={props.busy} type="button" className="delete-action" onClick={() => { closeActions(); props.onDelete(props.id); }}>Delete</button>
         </div>
       </details>
     </div>

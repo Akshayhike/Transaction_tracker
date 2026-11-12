@@ -312,3 +312,6 @@ form .secondary-button { background: #fff; color: #202b38; border-color: #d9e0e8
 @media (max-width: 420px) {
   .transaction-filters { grid-template-columns: 1fr; }
 }
+
+button:disabled { cursor: wait; opacity: 0.6; }
+[role="alert"] { color: #a23434; }

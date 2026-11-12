@@ -1,23 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Title_Date from './components/TitleDate.js';
 import Totals from './components/Totals.js';
 import AddTransaction from './components/addTransaction.js';
 import TransactionList from './components/TransactionList.js';
+import { fetchTransactions, createTransaction, updateTransaction, deleteTransaction } from './api/transactions.js';
 import CategorySummary from './components/CategorySummary.js';
 import type { NewTransaction, Transaction, TransactionType } from './types/transaction.js';
 
 function Main() {
-  // Sets the state for transactions.
-  const [transactions, setTransactions] = useState<Transaction[]>(() => [
-    {
-      id: 1,
-      description: "Groceries",
-      category: "Food",
-      date: new Date(),
-      amount: 2000,
-      type: "Expense",
-    },
-  ]);
+  // React displays the records saved by the API.
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadVersion, setLoadVersion] = useState(0);
+  const [loadError, setLoadError] = useState('');
+  const [mutationError, setMutationError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const mutationLock = useRef(false);
+  const busy = saving || loadState !== 'ready';
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchTransactions(controller.signal).then((records) => {
+      if (controller.signal.aborted) return;
+      setTransactions(records);
+      setLoadState('ready');
+    }).catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      setLoadError(error instanceof Error ? error.message : 'Unable to load transactions.');
+      setLoadState('error');
+    });
+    return () => controller.abort();
+  }, [loadVersion]);
 
   // The search, filter, and editing states.
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -27,22 +40,53 @@ function Main() {
 
   const editingTransaction = transactions.find((item) => item.id === editingId) ?? null;
 
-  function handleAddTransaction(transaction: NewTransaction) {
-    setTransactions((current) => {
-      const id = current.reduce((highest, item) => Math.max(highest, item.id), 0) + 1;
-      return [...current, { ...transaction, id }];
+  // A single pending operation prevents overlapping edits and duplicate clicks.
+  async function runMutation(operation: () => Promise<void>) {
+    if (mutationLock.current) throw new Error('Please wait for the current change to finish.');
+    mutationLock.current = true;
+    setSaving(true);
+    setMutationError('');
+    try {
+      await operation();
+    } finally {
+      mutationLock.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function handleAddTransaction(transaction: NewTransaction) {
+    await runMutation(async () => {
+      const saved = await createTransaction(transaction);
+      setTransactions((current) => [...current, saved]);
     });
   }
 
-  function handleSaveTransaction(id: number, transaction: NewTransaction) {
-    // map replaces the selected row while keeping its ID and the other rows.
-    setTransactions((current) => current.map((item) => item.id === id ? { ...transaction, id } : item));
-    setEditingId(null);
+  async function handleSaveTransaction(id: number, transaction: NewTransaction) {
+    await runMutation(async () => {
+      const saved = await updateTransaction(id, transaction);
+      setTransactions((current) => current.map((item) => item.id === id ? saved : item));
+      setEditingId(null);
+    });
   }
 
-  function handleDeleteTransaction(id: number) {
-    setTransactions((current) => current.filter((item) => item.id !== id));
-    if (editingId === id) setEditingId(null);
+  async function handleDeleteTransaction(id: number) {
+    try {
+      await runMutation(async () => {
+        await deleteTransaction(id);
+        setTransactions((current) => current.filter((item) => item.id !== id));
+        if (editingId === id) setEditingId(null);
+      });
+    } catch (error) {
+      setMutationError(error instanceof Error ? error.message : 'Unable to delete this transaction.');
+    }
+  }
+
+  function reloadTransactions() {
+    setLoadState('loading');
+    setLoadError('');
+    setMutationError('');
+    setEditingId(null);
+    setLoadVersion((current) => current + 1);
   }
 
   // Summaries always use the complete list; filters only change the rows shown.
@@ -57,6 +101,7 @@ function Main() {
     { income: 0, expenses: 0 },
   );
 
+  // Creates a map of category names.
   const categoryNames = new Map<string, string>();
   for (const transaction of transactions) {
     const key = transaction.category.toLowerCase();
@@ -82,12 +127,26 @@ function Main() {
   return (
     <div>
       <Title_Date title="Expense Tracker" date={new Date()} />
-      <div className="totals-section">
+      {loadState === 'loading' ? <p role="status">Loading transactions…</p> : null}
+      {loadState === 'error' ? (
+        <div role="alert">
+          <p>{loadError}</p>
+          <button type="button" onClick={reloadTransactions}>Retry loading</button>
+        </div>
+      ) : null}
+      {mutationError ? (
+        <div role="alert">
+          <p>{mutationError}</p>
+          <button type="button" disabled={busy} onClick={reloadTransactions}>Reload transactions</button>
+        </div>
+      ) : null}
+      {loadState === 'ready' ? <div className="totals-section">
         <p className="summary-scope">Totals for all transactions</p>
         <Totals income={totals.income / 100} expenses={totals.expenses / 100} balance={(totals.income - totals.expenses) / 100} />
-      </div>
+      </div> : null}
       <AddTransaction
         key={editingTransaction?.id ?? "new"}
+        busy={busy}
         onAdd={handleAddTransaction}
         editingTransaction={editingTransaction}
         onSave={handleSaveTransaction}
@@ -117,15 +176,16 @@ function Main() {
           <button type="button" onClick={clearFilters} disabled={!hasFilters}>Clear filters</button>
         </div>
         <p className="result-count" role="status">Showing {filteredTransactions.length} of {transactions.length} transactions</p>
-        <TransactionList
+        {loadState === 'ready' ? <TransactionList
           title="Transactions"
+          busy={busy}
           transactionList={filteredTransactions}
           hasFilters={hasFilters}
           onEdit={setEditingId}
           onDelete={handleDeleteTransaction}
-        />
+        /> : null}
       </section>
-      <CategorySummary transactions={transactions} />
+      {loadState === 'ready' ? <CategorySummary transactions={transactions} /> : null}
     </div>
   );
 }

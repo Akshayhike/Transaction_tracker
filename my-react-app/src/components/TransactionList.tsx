@@ -4,6 +4,7 @@ import type { Transaction } from "../types/transaction.js";
 // Defining the props for the TransactionList component.
 type TransactionListProps = {
   title: string;
+  busy: boolean;
   transactionList: Transaction[];
   hasFilters: boolean;
   onEdit: (id: number) => void;
@@ -11,7 +12,7 @@ type TransactionListProps = {
 };
 
 // Rendering the TransactionList component.
-function TransactionList({ title, transactionList, hasFilters, onEdit, onDelete }: TransactionListProps) {
+function TransactionList({ title, transactionList, hasFilters, onEdit, onDelete, busy }: TransactionListProps) {
   // Distinguish an empty tracker from filters that match no transactions.
   return (
     <div className="TranscationList">
@@ -19,11 +20,11 @@ function TransactionList({ title, transactionList, hasFilters, onEdit, onDelete 
       {transactionList.length === 0 ? (
         <p>{hasFilters ? "No transactions match your filters." : "No transactions yet"}</p>
       ) : (
-        transactionList.map((item) => <TransactionItem key={item.id} {...item} onEdit={onEdit} onDelete={onDelete} />)
+        transactionList.map((item) => <TransactionItem key={item.id} {...item} busy={busy} onEdit={onEdit} onDelete={onDelete} />)
       )}
     </div>
   );
 }
 
-// export for use
+// export for the list for use
 export default TransactionList;

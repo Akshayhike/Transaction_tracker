@@ -1,9 +1,9 @@
 import express from 'express';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { listTransactions, getTransaction, createTransaction, updateTransaction, deleteTransaction, closeDatabase } from './store.js';
 
 const app = express();
-const transactions = new Map();
-let nextId = 1;
 
 app.use(express.json({ limit: '16kb' }));
 
@@ -39,7 +39,7 @@ function findTransaction(req, res, next) {
   if (!/^[1-9]\d*$/.test(req.params.id) || !Number.isSafeInteger(id)) {
     return res.status(400).json({ error: 'Transaction ID must be a positive integer.' });
   }
-  if (!transactions.has(id)) {
+  if (!getTransaction(id)) {
     return res.status(404).json({ error: 'Transaction not found.' });
   }
   res.locals.id = id;
@@ -47,29 +47,30 @@ function findTransaction(req, res, next) {
 }
 
 app.get('/api/transactions', (_req, res) => {
-  res.json([...transactions.values()]);
+  res.json(listTransactions());
 });
 
 app.get('/api/transactions/:id', findTransaction, (_req, res) => {
-  res.json(transactions.get(res.locals.id));
+  res.json(getTransaction(res.locals.id));
 });
 
 app.post('/api/transactions', validateTransaction, (_req, res) => {
-  const transaction = { id: nextId++, ...res.locals.transaction };
-  transactions.set(transaction.id, transaction);
+  const transaction = createTransaction(res.locals.transaction);
   res.location(`/api/transactions/${transaction.id}`).status(201).json(transaction);
 });
 
 app.put('/api/transactions/:id', findTransaction, validateTransaction, (_req, res) => {
-  const transaction = { id: res.locals.id, ...res.locals.transaction };
-  transactions.set(transaction.id, transaction);
+  const transaction = updateTransaction(res.locals.id, res.locals.transaction);
   res.json(transaction);
 });
 
 app.delete('/api/transactions/:id', findTransaction, (_req, res) => {
-  transactions.delete(res.locals.id);
+  deleteTransaction(res.locals.id);
   res.status(204).end();
 });
+
+// A production build can be served from the same origin as the API.
+app.use(express.static(fileURLToPath(new URL('../dist', import.meta.url))));
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found.' });
@@ -91,3 +92,13 @@ const port = process.env.PORT ?? 3001;
 const server = app.listen(Number(port), '127.0.0.1', () => {
   console.log(`Transaction API listening at http://127.0.0.1:${server.address().port}`);
 });
+
+function shutdown() {
+  server.close(() => {
+    closeDatabase();
+    process.exit(0);
+  });
+}
+
+process.once('SIGINT', shutdown);
+process.once('SIGTERM', shutdown);

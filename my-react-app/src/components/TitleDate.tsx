@@ -15,4 +15,5 @@ function Title_Date(props: titleProps) {
   );
 }
 
+// Exports the Title_Date component.
 export default Title_Date;

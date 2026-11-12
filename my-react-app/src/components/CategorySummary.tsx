@@ -56,4 +56,5 @@ function CategorySummary({ transactions }: CategorySummaryProps) {
   );
 }
 
+// Exports the CategorySummary component.
 export default CategorySummary;
