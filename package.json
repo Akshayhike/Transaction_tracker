@@ -1,0 +1,7 @@
+{
+  "name": "transaction-tracker",
+  "private": true,
+  "scripts": {
+    "test": "npm --prefix my-react-app test"
+  }
+}

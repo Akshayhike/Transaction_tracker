@@ -152,7 +152,7 @@ function Main() {
         onSave={handleSaveTransaction}
         onCancel={() => setEditingId(null)}
       />
-      <section className="transaction-section" aria-label="Transaction history">
+      {loadState === 'ready' ? <section className="transaction-section" aria-label="Transaction history">
         <div className="transaction-filters">
           <label>
             Search transactions
@@ -176,15 +176,15 @@ function Main() {
           <button type="button" onClick={clearFilters} disabled={!hasFilters}>Clear filters</button>
         </div>
         <p className="result-count" role="status">Showing {filteredTransactions.length} of {transactions.length} transactions</p>
-        {loadState === 'ready' ? <TransactionList
+        <TransactionList
           title="Transactions"
           busy={busy}
           transactionList={filteredTransactions}
           hasFilters={hasFilters}
           onEdit={setEditingId}
           onDelete={handleDeleteTransaction}
-        /> : null}
-      </section>
+        />
+      </section> : null}
       {loadState === 'ready' ? <CategorySummary transactions={transactions} /> : null}
     </div>
   );

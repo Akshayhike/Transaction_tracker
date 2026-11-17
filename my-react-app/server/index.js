@@ -78,6 +78,9 @@ app.use((_req, res) => {
 
 app.use((error, _req, res, next) => {
   if (res.headersSent) return next(error);
+  if (error instanceof URIError) {
+    return res.status(400).json({ error: 'Request URL contains invalid encoding.' });
+  }
   if (error.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'Request body must be valid JSON.' });
   }
@@ -89,7 +92,13 @@ app.use((error, _req, res, next) => {
 });
 
 const port = process.env.PORT ?? 3001;
-const server = app.listen(Number(port), '127.0.0.1', () => {
+const server = app.listen(Number(port), '127.0.0.1', (error) => {
+  if (error) {
+    console.error('Could not start the transaction API:', error.message);
+    closeDatabase();
+    process.exitCode = 1;
+    return;
+  }
   console.log(`Transaction API listening at http://127.0.0.1:${server.address().port}`);
 });
 

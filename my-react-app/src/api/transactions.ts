@@ -13,6 +13,9 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...options.headers },
     });
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error('The request took too long. Please try again.');
+    }
     if (options.signal?.aborted) throw error;
     throw new Error('Could not reach the tracker server. Check that it is running, then try again.');
   }
@@ -24,11 +27,34 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-function fromApi(transaction: ApiTransaction): Transaction {
+function fromApi(value: unknown): Transaction {
+  const invalidData = 'The server returned invalid transaction data. Please retry loading.';
+  if (typeof value !== 'object' || value === null) throw new Error(invalidData);
+  const transaction = value as Partial<ApiTransaction>;
+  if (
+    typeof transaction.id !== 'number' || !Number.isSafeInteger(transaction.id) || transaction.id <= 0 ||
+    typeof transaction.description !== 'string' || !transaction.description.trim() ||
+    typeof transaction.category !== 'string' || !transaction.category.trim() ||
+    typeof transaction.amount !== 'number' || transaction.amount <= 0 ||
+    !Number.isSafeInteger(Math.round(transaction.amount * 100)) ||
+    Number(transaction.amount.toFixed(2)) !== transaction.amount ||
+    (transaction.type !== 'Income' && transaction.type !== 'Expense') ||
+    typeof transaction.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(transaction.date)
+  ) {
+    throw new Error(invalidData);
+  }
+
   // Parse the saved calendar date locally to preserve the day in every timezone.
   const date = parseISO(transaction.date);
-  if (!isValid(date)) throw new Error('The server returned a transaction with an invalid date.');
-  return { ...transaction, date };
+  if (!isValid(date)) throw new Error(invalidData);
+  return {
+    id: transaction.id,
+    description: transaction.description,
+    category: transaction.category,
+    amount: transaction.amount,
+    type: transaction.type,
+    date,
+  };
 }
 
 function toApi(transaction: NewTransaction) {
@@ -37,7 +63,10 @@ function toApi(transaction: NewTransaction) {
 
 export async function fetchTransactions(signal: AbortSignal): Promise<Transaction[]> {
   const timeoutSignal = AbortSignal.any([signal, AbortSignal.timeout(15000)]);
-  const transactions = await request<ApiTransaction[]>(baseUrl, { signal: timeoutSignal });
+  const transactions = await request<unknown>(baseUrl, { signal: timeoutSignal });
+  if (!Array.isArray(transactions)) {
+    throw new Error('The server returned an invalid transaction list. Please retry loading.');
+  }
   return transactions.map(fromApi);
 }
 

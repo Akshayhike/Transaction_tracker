@@ -108,13 +108,18 @@ The server generates IDs and preserves them when editing. Invalid input returns 
 
 ## Checks
 
+Run `npm test` from either the `Transaction_tracker` folder or its `my-react-app` subfolder. The outer folder forwards the command to the app. Tests start local API servers on automatically assigned ports.
+
 ```sh
+npm test
 npm run typecheck
 npm run lint
 npm run build
 ```
 
-Local verification covered API CRUD, invalid input, prepared statement binding, integer-cent storage and persistence across API restarts. Browser verification covers creating, editing, deleting, filtering, category summaries, refresh persistence, loading and failure recovery.
+The committed API suite in tests/api.test.js runs the actual server with temporary SQLite files and ephemeral ports. It covers CRUD, input validation, malformed requests, SQL parameter binding, concurrent creates, exact cent storage and persistence across server restarts. Each run cleans up its test databases.
+
+Local verification also covers API failure recovery and JSON error responses. Browser verification covers creating, editing, deleting, filtering, category summaries, refresh persistence, loading and failure recovery.
 
 The ESLint configuration currently checks JavaScript files. TypeScript files are checked with the separate typecheck command.
 
